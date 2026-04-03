@@ -19,12 +19,13 @@
     --accent3: #ffcc00;
     --text: #e0e0f0;
     --text-dim: #6666aa;
-    --btn-a: #ff3366;
-    --btn-b: #ff6600;
-    --btn-start: #444466;
-    --btn-select: #444466;
     --dpad: #1e1e30;
-    --screen-glow: rgba(0, 212, 255, 0.15);
+    --dpad-border: #2e2e50;
+    --screen-glow: rgba(0,212,255,0.18);
+
+    --dpad-cell: 52px;
+    --btn-ab: 68px;
+    --sys-h: 40px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -33,7 +34,7 @@
     width: 100%; height: 100%;
     background: var(--bg);
     color: var(--text);
-    font-family: 'Orbitron', monospace;
+    font-family: 'Orbitron', sans-serif;
     overflow: hidden;
     touch-action: none;
     user-select: none;
@@ -43,64 +44,59 @@
     display: flex;
     flex-direction: column;
     height: 100dvh;
-    max-height: 100dvh;
     overflow: hidden;
   }
 
   /* ── HEADER ── */
   #header {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 12px;
+    padding: 0 14px;
+    height: 42px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    z-index: 10;
   }
 
   #logo {
     font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--accent2);
-    text-shadow: 0 0 12px var(--accent2);
+    text-shadow: 0 0 14px var(--accent2);
     letter-spacing: 2px;
   }
 
-  #status-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 8px;
-    color: var(--text-dim);
+  #status-bar { display: flex; align-items: center; gap: 8px; }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-dim); flex-shrink: 0; transition: background .3s;
+  }
+  .status-dot.running {
+    background: #00ff88; box-shadow: 0 0 8px #00ff88; animation: blink 1s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  #rom-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px; color: var(--text-dim);
+    max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
 
   #fps-counter {
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
-    color: var(--accent3);
-    min-width: 42px;
-    text-align: right;
+    font-size: 8px; color: var(--accent3); min-width: 52px; text-align: right;
   }
 
-  .status-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--text-dim);
-    transition: background 0.3s;
-  }
-  .status-dot.running { background: #00ff88; box-shadow: 0 0 6px #00ff88; animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
-  /* ── SCREEN AREA ── */
+  /* ── SCREEN ── */
   #screen-container {
-    flex-shrink: 0;
+    flex: 1 1 0;
+    min-height: 0;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 8px 4px;
-    position: relative;
+    padding: 6px 6px 4px;
   }
 
   #screen-wrapper {
@@ -110,35 +106,19 @@
     overflow: hidden;
     box-shadow:
       0 0 0 2px var(--border),
-      0 0 0 3px #0a0a0f,
-      0 0 30px var(--screen-glow),
-      0 0 60px rgba(0,212,255,0.06);
+      0 0 0 4px #06060c,
+      0 0 28px var(--screen-glow),
+      0 0 56px rgba(0,212,255,.05);
   }
-
-  /* scanlines overlay */
   #screen-wrapper::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.15) 2px,
-      rgba(0,0,0,0.15) 3px
-    );
-    pointer-events: none;
-    z-index: 2;
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.13) 2px, rgba(0,0,0,.13) 3px);
+    pointer-events: none; z-index: 2;
   }
-
-  /* CRT curvature vignette */
   #screen-wrapper::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.6) 100%);
-    pointer-events: none;
-    z-index: 3;
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.65) 100%);
+    pointer-events: none; z-index: 3;
   }
 
   #canvas {
@@ -147,371 +127,250 @@
     image-rendering: crisp-edges;
   }
 
-  /* ROM drop zone overlay */
   #drop-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.92);
-    z-index: 10;
-    cursor: pointer;
-    transition: background 0.2s;
-    border-radius: 4px;
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,.93);
+    z-index: 10; cursor: pointer; border-radius: 4px;
   }
   #drop-overlay.hidden { display: none; }
-  #drop-overlay:active { background: rgba(0, 212, 255, 0.08); }
+  #drop-overlay:active { background: rgba(0,212,255,.06); }
 
-  .drop-icon {
-    font-size: 24px;
-    margin-bottom: 8px;
-    animation: float 2s ease-in-out infinite;
-  }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .drop-icon { font-size: 34px; margin-bottom: 10px; animation: float 2.2s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
 
   .drop-title {
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
-    color: var(--accent2);
-    text-align: center;
-    line-height: 1.6;
-    text-shadow: 0 0 10px var(--accent2);
+    font-size: 9px; color: var(--accent2);
+    text-align: center; line-height: 1.7; text-shadow: 0 0 12px var(--accent2);
   }
   .drop-sub {
-    font-size: 7px;
-    color: var(--text-dim);
-    margin-top: 6px;
-    text-align: center;
-    line-height: 1.6;
     font-family: 'Press Start 2P', monospace;
+    font-size: 7px; color: var(--text-dim); margin-top: 8px; line-height: 1.7; text-align: center;
   }
 
   /* ── MENU BAR ── */
   #menu-bar {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 4px 8px;
-    flex-shrink: 0;
+    gap: 7px;
+    padding: 5px 8px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
   }
 
   .menu-btn {
     font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
-    padding: 5px 8px;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    background: var(--panel);
-    color: var(--text-dim);
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
+    font-size: 8px; padding: 8px 10px;
+    border: 1.5px solid var(--border); border-radius: 5px;
+    background: var(--panel); color: var(--text-dim);
+    cursor: pointer; white-space: nowrap; transition: transform .12s;
+    -webkit-touch-callout: none;
   }
-  .menu-btn:active { transform: scale(0.94); }
+  .menu-btn:active { transform: scale(.92); }
   .menu-btn.primary { border-color: var(--accent2); color: var(--accent2); }
-  .menu-btn.primary:active { background: rgba(0,212,255,0.1); }
-  .menu-btn.danger { border-color: var(--accent); color: var(--accent); }
-  .menu-btn.danger:active { background: rgba(255,51,102,0.1); }
+  .menu-btn.primary:active { background: rgba(0,212,255,.1); }
+  .menu-btn.danger  { border-color: var(--accent);  color: var(--accent); }
+  .menu-btn.danger:active  { background: rgba(255,51,102,.1); }
 
   /* ── GAMEPAD ── */
   #gamepad {
-    flex: 1;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
-    padding: 4px 8px 8px;
-    min-height: 0;
+    padding: 10px 16px 12px;
+    gap: 0;
   }
 
-  /* Middle row: SELECT/START */
   #center-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
+    display: flex; align-items: center;
+    justify-content: center; gap: 16px; margin-bottom: 12px;
   }
 
   .sys-btn {
     font-family: 'Press Start 2P', monospace;
-    font-size: 5px;
-    padding: 6px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: var(--btn-start);
-    color: #aaaacc;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.1s;
+    font-size: 8px; height: var(--sys-h); padding: 0 18px;
+    border-radius: 24px; border: 1.5px solid #3a3a5a;
+    background: #1e1e32; color: #9999bb;
+    cursor: pointer; letter-spacing: 1px; transition: all .1s;
+    -webkit-touch-callout: none;
   }
-  .sys-btn:active { transform: scale(0.92); background: #555577; }
+  .sys-btn:active { transform: scale(.91); background: #2a2a44; color: #fff; }
 
-  /* Bottom row: D-Pad + AB */
   #action-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    display: flex; align-items: center; justify-content: space-between;
   }
 
   /* D-PAD */
   #dpad {
     position: relative;
-    width: 110px;
-    height: 110px;
+    width: calc(var(--dpad-cell) * 3);
+    height: calc(var(--dpad-cell) * 3);
     flex-shrink: 0;
   }
 
   .dpad-btn {
     position: absolute;
-    width: 34px;
-    height: 34px;
-    background: var(--dpad);
-    border: 1px solid #2e2e48;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.08s;
-    color: #4444aa;
-    font-size: 14px;
+    width: var(--dpad-cell); height: var(--dpad-cell);
+    background: var(--dpad); border: 1.5px solid var(--dpad-border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #4a4a88; font-size: 20px;
+    transition: background .08s, color .08s;
     -webkit-touch-callout: none;
   }
-  .dpad-btn:active, .dpad-btn.pressed { background: #2a2a42; color: var(--accent2); }
+  .dpad-btn:active, .dpad-btn.pressed { background: #28284a; color: var(--accent2); }
 
-  #dpad-up    { top: 0;    left: 38px; border-radius: 4px 4px 0 0; }
-  #dpad-down  { bottom: 0; left: 38px; border-radius: 0 0 4px 4px; }
-  #dpad-left  { top: 38px; left: 0;   border-radius: 4px 0 0 4px; }
-  #dpad-right { top: 38px; right: 0;  border-radius: 0 4px 4px 0; }
+  #dpad-up    { top:0;                          left:var(--dpad-cell); border-radius: 8px 8px 0 0; }
+  #dpad-down  { bottom:0;                       left:var(--dpad-cell); border-radius: 0 0 8px 8px; }
+  #dpad-left  { top:var(--dpad-cell); left:0;                          border-radius: 8px 0 0 8px; }
+  #dpad-right { top:var(--dpad-cell); right:0;                         border-radius: 0 8px 8px 0; }
   #dpad-center {
     position: absolute;
-    top: 38px; left: 38px;
-    width: 34px; height: 34px;
-    background: #161620;
-    border: 1px solid #1e1e30;
+    top: var(--dpad-cell); left: var(--dpad-cell);
+    width: var(--dpad-cell); height: var(--dpad-cell);
+    background: #141420; border: 1px solid #1c1c2e; pointer-events: none;
   }
 
-  /* AB BUTTONS */
-  #ab-buttons {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
-  #ab-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 14px;
-  }
+  /* A / B */
+  #ab-group { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  #ab-row   { display: flex; align-items: flex-end; gap: 18px; }
+  .ab-wrap  { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 
   .action-btn {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 12px;
-    font-weight: 900;
-    transition: all 0.08s;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.5), 0 0 15px rgba(0,0,0,0.3);
+    width: var(--btn-ab); height: var(--btn-ab);
+    border-radius: 50%; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-family: 'Press Start 2P', monospace;
+    font-size: 18px; color: #fff;
+    transition: transform .08s, box-shadow .08s;
     -webkit-touch-callout: none;
   }
-  .action-btn:active, .action-btn.pressed {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 rgba(0,0,0,0.5);
-  }
+  .action-btn:active, .action-btn.pressed { transform: translateY(4px); }
 
   #btn-b {
-    background: radial-gradient(circle at 35% 35%, #ff8833, #cc4400);
-    color: #fff;
-    box-shadow: 0 4px 0 #882200, 0 0 20px rgba(255,102,0,0.3);
-    margin-bottom: 12px;
+    background: radial-gradient(circle at 35% 32%, #ff9944, #cc4400);
+    box-shadow: 0 5px 0 #7a2200, 0 0 22px rgba(255,102,0,.35);
+    margin-bottom: 14px;
   }
-  #btn-b:active { box-shadow: 0 1px 0 #882200; }
+  #btn-b:active { box-shadow: 0 1px 0 #7a2200; }
 
   #btn-a {
-    background: radial-gradient(circle at 35% 35%, #ff4477, #cc1144);
-    color: #fff;
-    box-shadow: 0 4px 0 #880022, 0 0 20px rgba(255,51,102,0.35);
+    background: radial-gradient(circle at 35% 32%, #ff557a, #cc1144);
+    box-shadow: 0 5px 0 #800030, 0 0 22px rgba(255,51,102,.38);
   }
-  #btn-a:active { box-shadow: 0 1px 0 #880022; }
+  #btn-a:active { box-shadow: 0 1px 0 #800030; }
 
-  .ab-label {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 5px;
-    color: var(--text-dim);
-    text-align: center;
-    margin-top: 2px;
+  .ab-label { font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--text-dim); }
+
+  /* Speed badge */
+  #speed-badge {
+    font-family: 'Press Start 2P', monospace; font-size: 7px;
+    color: var(--accent3); padding: 4px 8px;
+    border: 1.5px solid rgba(255,204,0,.4); border-radius: 4px;
+    cursor: pointer; -webkit-touch-callout: none;
   }
+  #speed-badge:active { background: rgba(255,204,0,.1); }
 
-  /* Hidden file input */
-  #rom-input { display: none; }
-
-  /* ── NOTIFICATION ── */
+  /* Notification */
   #notification {
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    background: var(--panel);
-    border: 1px solid var(--accent2);
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
-    color: var(--accent2);
-    text-align: center;
-    opacity: 0;
-    transition: all 0.3s;
-    pointer-events: none;
-    z-index: 100;
-    white-space: nowrap;
+    position: fixed; top: 52px; left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    background: var(--panel); border: 1.5px solid var(--accent2);
+    border-radius: 6px; padding: 9px 18px;
+    font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--accent2);
+    text-align: center; opacity: 0;
+    transition: opacity .25s, transform .25s;
+    pointer-events: none; z-index: 200; white-space: nowrap;
   }
-  #notification.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+  #notification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ── SAVE STATE PANEL ── */
+  /* Save panel */
   #save-panel {
-    position: fixed;
-    bottom: -200px;
-    left: 0; right: 0;
-    background: var(--surface);
-    border-top: 2px solid var(--border);
-    padding: 12px;
-    z-index: 50;
-    transition: bottom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: fixed; bottom: -260px; left: 0; right: 0;
+    background: var(--surface); border-top: 2px solid var(--border);
+    padding: 14px 14px 24px; z-index: 150;
+    transition: bottom .3s cubic-bezier(.34,1.56,.64,1);
+    border-radius: 16px 16px 0 0;
   }
   #save-panel.open { bottom: 0; }
 
-  .save-panel-title {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
-    color: var(--text-dim);
-    margin-bottom: 10px;
-    text-align: center;
+  .sp-title {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    color: var(--text-dim); text-align: center; margin-bottom: 14px;
   }
-
-  .save-slots {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
+  .save-slots { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .save-slot {
-    width: 70px;
-    height: 50px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--panel);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
-    color: var(--text-dim);
-    gap: 4px;
+    width: 76px; height: 58px; border: 1.5px solid var(--border);
+    border-radius: 6px; background: var(--panel);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; gap: 6px;
+    font-family: 'Press Start 2P', monospace; font-size: 7px; color: var(--text-dim);
+    transition: transform .12s;
   }
-  .save-slot:active { transform: scale(0.95); }
+  .save-slot:active { transform: scale(.94); }
   .save-slot.has-save { border-color: var(--accent2); color: var(--accent2); }
-  .save-slot .slot-icon { font-size: 16px; }
-  .save-panel-close {
-    display: block;
-    margin: 10px auto 0;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
-    padding: 6px 16px;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    background: var(--panel);
-    color: var(--text-dim);
-    cursor: pointer;
+  .save-slot .si { font-size: 18px; }
+  .sp-close {
+    display: block; margin: 14px auto 0;
+    font-family: 'Press Start 2P', monospace; font-size: 7px; padding: 8px 20px;
+    border: 1.5px solid var(--border); border-radius: 5px;
+    background: var(--panel); color: var(--text-dim); cursor: pointer;
   }
 
-  /* Speed indicator */
-  #speed-indicator {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
-    color: var(--accent3);
-    padding: 3px 6px;
-    border: 1px solid var(--accent3);
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  #speed-indicator:active { background: rgba(255,204,0,0.1); }
+  #rom-input { display: none; }
 </style>
 </head>
 <body>
-
 <div id="app">
-  <!-- HEADER -->
+
   <div id="header">
     <div id="logo">NES</div>
     <div id="status-bar">
       <div class="status-dot" id="status-dot"></div>
-      <span id="rom-name" style="font-family:'Press Start 2P',monospace;font-size:6px;color:#6666aa;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">NO ROM</span>
+      <span id="rom-name">NO ROM</span>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <div id="speed-indicator" onclick="cycleSpeed()">▶ 1×</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="speed-badge" onclick="cycleSpeed()">▶ 1×</div>
       <div id="fps-counter">-- FPS</div>
     </div>
   </div>
 
-  <!-- SCREEN -->
   <div id="screen-container">
     <div id="screen-wrapper">
       <canvas id="canvas" width="256" height="240"></canvas>
       <div id="drop-overlay" onclick="document.getElementById('rom-input').click()">
         <div class="drop-icon">🎮</div>
         <div class="drop-title">TAP TO LOAD ROM</div>
-        <div class="drop-sub">supports .nes files<br>up to 4MB</div>
+        <div class="drop-sub">supports .nes files<br>up to 4 MB</div>
       </div>
     </div>
   </div>
 
-  <!-- MENU BAR -->
   <div id="menu-bar">
     <button class="menu-btn primary" onclick="document.getElementById('rom-input').click()">📂 ROM</button>
-    <button class="menu-btn" onclick="toggleSavePanel()">💾 SAVE</button>
-    <button class="menu-btn" onclick="resetGame()">🔄 RST</button>
-    <button class="menu-btn danger" onclick="stopGame()">⏹ STOP</button>
-    <button class="menu-btn" onclick="toggleSound()">🔊</button>
+    <button class="menu-btn"         onclick="toggleSavePanel()">💾 SAVE</button>
+    <button class="menu-btn"         onclick="resetGame()">🔄 RST</button>
+    <button class="menu-btn danger"  onclick="stopGame()">⏹ STOP</button>
+    <button class="menu-btn"         onclick="toggleSound()" id="snd-btn">🔊</button>
   </div>
 
-  <!-- GAMEPAD -->
   <div id="gamepad">
-    <!-- SELECT / START -->
     <div id="center-row">
-      <button class="sys-btn" id="btn-select"
+      <button class="sys-btn"
         ontouchstart="btnDown(0,'SELECT');event.preventDefault()"
         ontouchend="btnUp(0,'SELECT');event.preventDefault()"
         onmousedown="btnDown(0,'SELECT')" onmouseup="btnUp(0,'SELECT')">SELECT</button>
-      <button class="sys-btn" id="btn-start"
+      <button class="sys-btn"
         ontouchstart="btnDown(0,'START');event.preventDefault()"
         ontouchend="btnUp(0,'START');event.preventDefault()"
         onmousedown="btnDown(0,'START')" onmouseup="btnUp(0,'START')">START</button>
     </div>
 
-    <!-- DPAD + AB -->
     <div id="action-row">
-      <!-- D-PAD -->
       <div id="dpad">
         <div class="dpad-btn" id="dpad-up"
           ontouchstart="btnDown(0,'UP');event.preventDefault()"
@@ -529,23 +388,19 @@
           ontouchstart="btnDown(0,'RIGHT');event.preventDefault()"
           ontouchend="btnUp(0,'RIGHT');event.preventDefault()"
           onmousedown="btnDown(0,'RIGHT')" onmouseup="btnUp(0,'RIGHT')">▶</div>
-        <div class="dpad-btn" id="dpad-center" style="pointer-events:none;"></div>
+        <div id="dpad-center"></div>
       </div>
 
-      <!-- Spacer -->
-      <div style="flex:1"></div>
-
-      <!-- A / B -->
-      <div id="ab-buttons">
+      <div id="ab-group">
         <div id="ab-row">
-          <div>
+          <div class="ab-wrap">
             <button class="action-btn" id="btn-b"
               ontouchstart="btnDown(0,'B');event.preventDefault()"
               ontouchend="btnUp(0,'B');event.preventDefault()"
               onmousedown="btnDown(0,'B')" onmouseup="btnUp(0,'B')">B</button>
             <div class="ab-label">B</div>
           </div>
-          <div>
+          <div class="ab-wrap">
             <button class="action-btn" id="btn-a"
               ontouchstart="btnDown(0,'A');event.preventDefault()"
               ontouchend="btnUp(0,'A');event.preventDefault()"
@@ -556,395 +411,207 @@
       </div>
     </div>
   </div>
+
 </div>
 
-<!-- SAVE PANEL -->
 <div id="save-panel">
-  <div class="save-panel-title">SAVE STATES</div>
+  <div class="sp-title">── SAVE STATES ──</div>
   <div class="save-slots" id="save-slots"></div>
-  <button class="save-panel-close" onclick="toggleSavePanel()">CLOSE</button>
+  <button class="sp-close" onclick="toggleSavePanel()">CLOSE</button>
 </div>
 
-<!-- NOTIFICATION -->
 <div id="notification"></div>
-
-<!-- HIDDEN INPUTS -->
 <input type="file" id="rom-input" accept=".nes" onchange="loadROMFile(this)">
 
 <script>
-// ─── TELEGRAM INIT ───
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.ready();
-  tg.expand();
-  tg.enableClosingConfirmation?.();
-}
+if (tg) { tg.ready(); tg.expand(); tg.enableClosingConfirmation?.(); }
 
-// ─── EMULATOR STATE ───
-let nes = null;
-let animFrameId = null;
-let isRunning = false;
-let soundEnabled = true;
-let speedMultiplier = 1;
-const SPEEDS = [1, 2, 0.5];
-let speedIdx = 0;
-let currentRomName = '';
-let saveStates = {};
+let nes = null, animFrameId = null, isRunning = false;
+let soundEnabled = true, speedIdx = 0;
+const SPEEDS = [1, 2, 0.5], SPEED_LABELS = ['1×', '2×', '½×'];
+let currentRomName = '', saveStates = {};
 
-// ─── CANVAS SETUP ───
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const imageData = ctx.createImageData(256, 240);
 const buf32 = new Uint32Array(imageData.data.buffer);
 
 function resizeCanvas() {
-  const container = document.getElementById('screen-container');
-  const wrapper = document.getElementById('screen-wrapper');
-  const maxW = container.clientWidth - 16;
-  const maxH = container.clientHeight - 16;
-  const scale = Math.min(maxW / 256, maxH / 240, 3);
-  const w = Math.floor(256 * scale);
-  const h = Math.floor(240 * scale);
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
-  wrapper.style.width = w + 'px';
-  wrapper.style.height = h + 'px';
+  const cont = document.getElementById('screen-container');
+  const W = cont.clientWidth - 12, H = cont.clientHeight - 10;
+  const scale = Math.min(W / 256, H / 240);
+  const w = Math.floor(256 * scale), h = Math.floor(240 * scale);
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  const wr = document.getElementById('screen-wrapper');
+  wr.style.width = w + 'px'; wr.style.height = h + 'px';
 }
 
-// ─── AUDIO SETUP ───
-let audioCtx = null;
-let scriptNode = null;
-let audioBuffer = [];
-const SAMPLE_RATE = 44100;
-const BUFFER_SIZE = 4096;
+let audioCtx = null, audioBuffer = [];
+const SAMPLE_RATE = 44100, BUFFER_SIZE = 4096;
 
 function initAudio() {
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLE_RATE });
-    scriptNode = audioCtx.createScriptProcessor(BUFFER_SIZE, 0, 1);
-    scriptNode.onaudioprocess = (e) => {
+    const node = audioCtx.createScriptProcessor(BUFFER_SIZE, 0, 1);
+    node.onaudioprocess = e => {
       const out = e.outputBuffer.getChannelData(0);
       const len = Math.min(audioBuffer.length, BUFFER_SIZE);
       for (let i = 0; i < len; i++) out[i] = audioBuffer.shift();
       for (let i = len; i < BUFFER_SIZE; i++) out[i] = 0;
     };
-    scriptNode.connect(audioCtx.destination);
-  } catch (e) { console.warn('Audio init failed:', e); }
+    node.connect(audioCtx.destination);
+  } catch(e) {}
 }
 
-function resumeAudio() {
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-}
+function resumeAudio() { if (audioCtx?.state === 'suspended') audioCtx.resume(); }
 
-// ─── NES INIT ───
 function initNES() {
   nes = new jsnes.NES({
-    onFrame(frameBuf) {
-      // frameBuf is Int32Array (RGBA), convert for canvas
-      for (let i = 0; i < frameBuf.length; i++) {
-        const c = frameBuf[i];
-        // jsnes gives 0xBBGGRR, we need AABBGGRR for ImageData (little-endian = RGBA)
-        buf32[i] = 0xFF000000 | (c & 0xFFFFFF);
-      }
+    onFrame(fb) {
+      for (let i = 0; i < fb.length; i++) buf32[i] = 0xFF000000 | (fb[i] & 0xFFFFFF);
       ctx.putImageData(imageData, 0, 0);
     },
-    onAudioSample(left, right) {
-      if (soundEnabled && audioBuffer.length < BUFFER_SIZE * 4) {
-        audioBuffer.push((left + right) / 2);
-      }
+    onAudioSample(l, r) {
+      if (soundEnabled && audioBuffer.length < BUFFER_SIZE * 4) audioBuffer.push((l + r) / 2);
     },
     sampleRate: SAMPLE_RATE
   });
 }
 
-// ─── ROM LOADING ───
 function loadROMFile(input) {
-  const file = input.files[0];
-  if (!file) return;
+  const file = input.files[0]; if (!file) return;
   if (!file.name.endsWith('.nes')) { notify('⚠ NOT A .NES FILE'); return; }
-  if (file.size > 4 * 1024 * 1024) { notify('⚠ FILE TOO LARGE (MAX 4MB)'); return; }
-
+  if (file.size > 4*1024*1024) { notify('⚠ FILE TOO LARGE'); return; }
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = e => {
     try {
-      resumeAudio();
-      if (!nes) initNES();
-      else { stopGame(); initNES(); }
-
-      const data = e.target.result;
-      nes.loadROM(data);
-      currentRomName = file.name.replace('.nes', '').toUpperCase().slice(0, 16);
+      resumeAudio(); stopGame(true); initNES();
+      nes.loadROM(e.target.result);
+      currentRomName = file.name.replace(/\.nes$/i,'').toUpperCase().slice(0,18);
       document.getElementById('rom-name').textContent = currentRomName;
       document.getElementById('drop-overlay').classList.add('hidden');
       document.getElementById('status-dot').className = 'status-dot running';
-
-      startLoop();
-      notify('▶ ' + currentRomName);
-    } catch (err) {
-      notify('⚠ ROM LOAD ERROR');
-      console.error(err);
-    }
+      startLoop(); notify('▶ ' + currentRomName);
+    } catch(err) { notify('⚠ ROM LOAD ERROR'); console.error(err); }
   };
-  reader.readAsBinaryString(file);
-  input.value = '';
+  reader.readAsBinaryString(file); input.value = '';
 }
 
-// ─── GAME LOOP ───
-let lastTime = 0;
-let frameCount = 0;
-let fpsTime = 0;
-
+let lastTime=0, frameCount=0, fpsTime=0;
 function startLoop() {
   if (animFrameId) cancelAnimationFrame(animFrameId);
-  isRunning = true;
-  lastTime = performance.now();
-  loop(lastTime);
+  isRunning = true; lastTime = performance.now(); loop(lastTime);
 }
-
 function loop(now) {
   if (!isRunning) return;
   animFrameId = requestAnimationFrame(loop);
-
-  const dt = now - lastTime;
-  lastTime = now;
-
-  // FPS counter
-  frameCount++;
-  fpsTime += dt;
+  const dt = now - lastTime; lastTime = now;
+  frameCount++; fpsTime += dt;
   if (fpsTime >= 500) {
-    const fps = Math.round(frameCount / fpsTime * 1000);
-    document.getElementById('fps-counter').textContent = fps + ' FPS';
+    document.getElementById('fps-counter').textContent = Math.round(frameCount/fpsTime*1000)+' FPS';
     frameCount = 0; fpsTime = 0;
   }
-
-  // Run NES frames
-  if (nes) {
-    try {
-      const framesPerTick = speedMultiplier;
-      for (let i = 0; i < Math.max(1, Math.round(framesPerTick)); i++) {
-        nes.frame();
-      }
-    } catch (e) {}
-  }
+  if (nes) try { const n=Math.max(1,Math.round(SPEEDS[speedIdx])); for(let i=0;i<n;i++) nes.frame(); } catch(e){}
 }
 
-// ─── CONTROLS ───
 const BTN_MAP = {
-  'A': jsnes.Controller.BUTTON_A,
-  'B': jsnes.Controller.BUTTON_B,
-  'SELECT': jsnes.Controller.BUTTON_SELECT,
-  'START': jsnes.Controller.BUTTON_START,
-  'UP': jsnes.Controller.BUTTON_UP,
-  'DOWN': jsnes.Controller.BUTTON_DOWN,
-  'LEFT': jsnes.Controller.BUTTON_LEFT,
-  'RIGHT': jsnes.Controller.BUTTON_RIGHT,
+  A:jsnes.Controller.BUTTON_A, B:jsnes.Controller.BUTTON_B,
+  SELECT:jsnes.Controller.BUTTON_SELECT, START:jsnes.Controller.BUTTON_START,
+  UP:jsnes.Controller.BUTTON_UP, DOWN:jsnes.Controller.BUTTON_DOWN,
+  LEFT:jsnes.Controller.BUTTON_LEFT, RIGHT:jsnes.Controller.BUTTON_RIGHT,
 };
+function btnDown(p,b){ if(nes&&isRunning){resumeAudio();nes.buttonDown(p+1,BTN_MAP[b]);} }
+function btnUp(p,b)  { if(nes&&isRunning) nes.buttonUp(p+1,BTN_MAP[b]); }
 
-function btnDown(player, btn) {
-  if (!nes || !isRunning) return;
-  resumeAudio();
-  nes.buttonDown(player + 1, BTN_MAP[btn]);
-}
+const keyMap={ArrowUp:['UP'],ArrowDown:['DOWN'],ArrowLeft:['LEFT'],ArrowRight:['RIGHT'],
+  z:['A'],Z:['A'],x:['B'],X:['B'],Enter:['START'],Shift:['SELECT'],' ':['A']};
+document.addEventListener('keydown',e=>{const b=keyMap[e.key];if(b){btnDown(0,b[0]);e.preventDefault();}});
+document.addEventListener('keyup',  e=>{const b=keyMap[e.key];if(b) btnUp(0,b[0]);});
+document.addEventListener('contextmenu',e=>e.preventDefault());
 
-function btnUp(player, btn) {
-  if (!nes || !isRunning) return;
-  nes.buttonUp(player + 1, BTN_MAP[btn]);
-}
-
-// Keyboard support
-const keyMap = {
-  'ArrowUp': ['UP'], 'ArrowDown': ['DOWN'],
-  'ArrowLeft': ['LEFT'], 'ArrowRight': ['RIGHT'],
-  'z': ['A'], 'Z': ['A'], 'x': ['B'], 'X': ['B'],
-  'Enter': ['START'], 'Shift': ['SELECT'],
-  ' ': ['A']
-};
-
-document.addEventListener('keydown', (e) => {
-  const b = keyMap[e.key];
-  if (b) { btnDown(0, b[0]); e.preventDefault(); }
-});
-document.addEventListener('keyup', (e) => {
-  const b = keyMap[e.key];
-  if (b) { btnUp(0, b[0]); e.preventDefault(); }
-});
-
-// Prevent context menu on long press
-document.addEventListener('contextmenu', e => e.preventDefault());
-
-// ─── RESET / STOP ───
-function resetGame() {
-  if (!nes) return;
-  resumeAudio();
-  nes.reset();
-  notify('🔄 RESET');
-}
-
-function stopGame() {
-  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
-  isRunning = false;
-  nes = null;
-  ctx.clearRect(0, 0, 256, 240);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, 256, 240);
-  document.getElementById('status-dot').className = 'status-dot';
-  document.getElementById('rom-name').textContent = 'NO ROM';
+function stopGame(silent=false) {
+  if (animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
+  isRunning=false; nes=null;
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,256,240);
+  document.getElementById('status-dot').className='status-dot';
+  document.getElementById('rom-name').textContent='NO ROM';
   document.getElementById('drop-overlay').classList.remove('hidden');
-  document.getElementById('fps-counter').textContent = '-- FPS';
-  notify('⏹ STOPPED');
+  document.getElementById('fps-counter').textContent='-- FPS';
+  if(!silent) notify('⏹ STOPPED');
 }
+function resetGame() { if(!nes)return; resumeAudio(); nes.reset(); notify('🔄 RESET'); }
 
-// ─── SOUND TOGGLE ───
 function toggleSound() {
-  soundEnabled = !soundEnabled;
-  const btn = document.querySelector('.menu-btn[onclick="toggleSound()"]');
-  btn.textContent = soundEnabled ? '🔊' : '🔇';
-  notify(soundEnabled ? '🔊 SOUND ON' : '🔇 SOUND OFF');
+  soundEnabled=!soundEnabled;
+  document.getElementById('snd-btn').textContent=soundEnabled?'🔊':'🔇';
+  notify(soundEnabled?'🔊 SOUND ON':'🔇 MUTE');
 }
-
-// ─── SPEED ───
 function cycleSpeed() {
-  speedIdx = (speedIdx + 1) % SPEEDS.length;
-  speedMultiplier = SPEEDS[speedIdx];
-  const labels = ['1×', '2×', '½×'];
-  document.getElementById('speed-indicator').textContent = '▶ ' + labels[speedIdx];
-  notify('SPEED: ' + labels[speedIdx]);
+  speedIdx=(speedIdx+1)%SPEEDS.length;
+  document.getElementById('speed-badge').textContent='▶ '+SPEED_LABELS[speedIdx];
+  notify('SPEED '+SPEED_LABELS[speedIdx]);
 }
 
-// ─── SAVE STATES ───
-let savePanelOpen = false;
-
+let savePanelOpen=false;
 function renderSaveSlots() {
-  const container = document.getElementById('save-slots');
-  container.innerHTML = '';
-  for (let i = 1; i <= 4; i++) {
-    const key = 'save_' + currentRomName + '_' + i;
-    const hasSave = !!saveStates[key];
-    const slot = document.createElement('div');
-    slot.className = 'save-slot' + (hasSave ? ' has-save' : '');
-    slot.innerHTML = `<div class="slot-icon">${hasSave ? '💾' : '▭'}</div><div>SLOT ${i}</div>`;
-    slot.onclick = () => handleSaveSlot(i, key, hasSave);
-    container.appendChild(slot);
+  const c=document.getElementById('save-slots'); c.innerHTML='';
+  for(let i=1;i<=4;i++){
+    const key='sv_'+currentRomName+'_'+i, has=!!saveStates[key];
+    const el=document.createElement('div');
+    el.className='save-slot'+(has?' has-save':'');
+    el.innerHTML=`<div class="si">${has?'💾':'◻'}</div><div>SLOT ${i}</div>`;
+    el.onclick=()=>{
+      if(!nes){notify('⚠ NO ROM');return;}
+      if(has){try{nes.fromJSON(saveStates[key]);notify('📂 SLOT '+i+' LOADED');toggleSavePanel();}catch(e){notify('⚠ LOAD ERR');}}
+      else   {try{saveStates[key]=nes.toJSON();notify('💾 SLOT '+i+' SAVED');renderSaveSlots();}catch(e){notify('⚠ SAVE ERR');}}
+    };
+    c.appendChild(el);
   }
 }
-
-function handleSaveSlot(i, key, hasSave) {
-  if (!nes) { notify('⚠ NO ROM LOADED'); return; }
-  if (hasSave) {
-    // Load state
-    try {
-      nes.fromJSON(saveStates[key]);
-      notify('📂 SLOT ' + i + ' LOADED');
-      toggleSavePanel();
-    } catch (e) { notify('⚠ LOAD FAILED'); }
-  } else {
-    // Save state
-    try {
-      saveStates[key] = nes.toJSON();
-      notify('💾 SLOT ' + i + ' SAVED');
-      renderSaveSlots();
-    } catch (e) { notify('⚠ SAVE FAILED'); }
-  }
-}
-
 function toggleSavePanel() {
-  savePanelOpen = !savePanelOpen;
-  const panel = document.getElementById('save-panel');
-  if (savePanelOpen) {
-    renderSaveSlots();
-    panel.classList.add('open');
-  } else {
-    panel.classList.remove('open');
-  }
+  savePanelOpen=!savePanelOpen;
+  const p=document.getElementById('save-panel');
+  if(savePanelOpen){renderSaveSlots();p.classList.add('open');}
+  else p.classList.remove('open');
 }
 
-// ─── NOTIFICATION ───
-let notifyTimeout = null;
+let notifyT=null;
 function notify(msg) {
-  const el = document.getElementById('notification');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(notifyTimeout);
-  notifyTimeout = setTimeout(() => el.classList.remove('show'), 2000);
+  const el=document.getElementById('notification');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(notifyT); notifyT=setTimeout(()=>el.classList.remove('show'),2200);
 }
 
-// ─── TOUCH DPAD (joystick-style swipe detection) ───
-let dpadTouch = null;
-const dpadEl = document.getElementById('dpad');
-let activeDpadBtn = null;
-
-dpadEl.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  dpadTouch = e.touches[0];
-  updateDpadFromTouch(e.touches[0]);
-}, { passive: false });
-
-dpadEl.addEventListener('touchmove', (e) => {
-  e.preventDefault();
-  if (e.touches.length > 0) updateDpadFromTouch(e.touches[0]);
-}, { passive: false });
-
-dpadEl.addEventListener('touchend', (e) => {
-  e.preventDefault();
-  if (activeDpadBtn) {
-    btnUp(0, activeDpadBtn);
-    document.getElementById('dpad-' + activeDpadBtn.toLowerCase())?.classList.remove('pressed');
-    activeDpadBtn = null;
-  }
-  dpadTouch = null;
-}, { passive: false });
-
-function updateDpadFromTouch(touch) {
-  const rect = dpadEl.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  const dx = touch.clientX - cx;
-  const dy = touch.clientY - cy;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist < 10) return;
-
-  let newBtn = null;
-  if (Math.abs(dx) > Math.abs(dy)) {
-    newBtn = dx > 0 ? 'RIGHT' : 'LEFT';
-  } else {
-    newBtn = dy > 0 ? 'DOWN' : 'UP';
-  }
-
-  if (newBtn !== activeDpadBtn) {
-    if (activeDpadBtn) {
-      btnUp(0, activeDpadBtn);
-      document.getElementById('dpad-' + activeDpadBtn.toLowerCase())?.classList.remove('pressed');
-    }
-    activeDpadBtn = newBtn;
-    btnDown(0, activeDpadBtn);
-    document.getElementById('dpad-' + activeDpadBtn.toLowerCase())?.classList.add('pressed');
-  }
+// D-Pad joystick touch
+const dpadEl=document.getElementById('dpad');
+let activeDpad=null;
+function dpadPress(btn) {
+  if(btn===activeDpad)return;
+  if(activeDpad){btnUp(0,activeDpad);document.getElementById('dpad-'+activeDpad.toLowerCase())?.classList.remove('pressed');}
+  activeDpad=btn; btnDown(0,btn); document.getElementById('dpad-'+btn.toLowerCase())?.classList.add('pressed');
 }
+function dpadRelease() {
+  if(activeDpad){btnUp(0,activeDpad);document.getElementById('dpad-'+activeDpad.toLowerCase())?.classList.remove('pressed');activeDpad=null;}
+}
+function dpadFromTouch(t) {
+  const r=dpadEl.getBoundingClientRect();
+  const dx=t.clientX-(r.left+r.width/2), dy=t.clientY-(r.top+r.height/2);
+  if(Math.hypot(dx,dy)<8)return;
+  dpadPress(Math.abs(dx)>Math.abs(dy)?(dx>0?'RIGHT':'LEFT'):(dy>0?'DOWN':'UP'));
+}
+dpadEl.addEventListener('touchstart',e=>{e.preventDefault();dpadFromTouch(e.touches[0]);},{passive:false});
+dpadEl.addEventListener('touchmove', e=>{e.preventDefault();if(e.touches.length)dpadFromTouch(e.touches[0]);},{passive:false});
+dpadEl.addEventListener('touchend',  e=>{e.preventDefault();dpadRelease();},{passive:false});
 
-// ─── INIT ───
 function init() {
-  initAudio();
-  resizeCanvas();
+  initAudio(); resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
-  window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
-
-  // Draw initial black screen
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, 256, 240);
-  ctx.fillStyle = '#333';
-  ctx.fillRect(80, 110, 96, 20);
-  ctx.fillStyle = '#555';
-  ctx.font = '8px monospace';
-  ctx.fillText('INSERT ROM', 86, 124);
-
-  // Telegram theme integration
-  if (tg?.themeParams) {
-    document.documentElement.style.setProperty('--bg', tg.themeParams.bg_color || '#0a0a0f');
-  }
-
+  window.addEventListener('orientationchange', ()=>setTimeout(resizeCanvas,200));
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,256,240);
+  if(tg?.themeParams?.bg_color) document.documentElement.style.setProperty('--bg',tg.themeParams.bg_color);
   notify('READY • LOAD A .NES ROM');
 }
-
 init();
 </script>
 </body>
